@@ -39,20 +39,6 @@ times = [
 
 workerTimeLimits = [36,	37,	38,	48,	44]
 
-def isValidWorker(workerId: int, currSol: List[int], times: List[List[int]], workerTimeLimits: List[List[int]]) -> bool:
-    workerLimit = workerTimeLimits[workerId - 1]
-    totalWorkerTime = 0
-    
-    for i in range(len(currSol)):
-        if currSol[i] == workerId:
-            taskTime = times[i][workerId - 1]
-            totalWorkerTime += taskTime
-        
-        if totalWorkerTime > workerLimit:
-            return False
-    return True
-
-
 def calculatePenalty(solutionArr: List[int], times: List[int], workerTimeLimits: List[int]) -> int:
     numWorkers = len(workerTimeLimits)
     workerTotalTime = [0 for i in range(numWorkers)]
