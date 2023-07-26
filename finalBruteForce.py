@@ -69,7 +69,10 @@ def calculatePenalty(solutionArr: List[int], times: List[int], workerTimeLimits:
     # calculate total penalty for the solution
     for j in range(numWorkers):
         timeLimitExceed = workerTotalTime[j] - workerTimeLimits[j]
-        totalPenalty += timeLimitExceed
+        
+        # fix
+        if timeLimitExceed > 0:
+            totalPenalty += timeLimitExceed
     
     return totalPenalty
 
