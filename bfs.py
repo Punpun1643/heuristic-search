@@ -1,5 +1,6 @@
 from typing import List
 from collections import deque
+import math
 
 costs = [
     [19, 25, 16, 25, 25],
@@ -39,6 +40,7 @@ times = [
 
 workerTimeLimits = [36,	37,	38,	48,	44]
 
+
 def calculatePenalty(solutionArr: List[int], times: List[int], workerTimeLimits: List[int]) -> int:
     numWorkers = len(workerTimeLimits)
     workerTotalTime = [0 for i in range(numWorkers)]
@@ -64,19 +66,32 @@ def calculatePenalty(solutionArr: List[int], times: List[int], workerTimeLimits:
     return totalPenalty
 
 
+def calculateCost(solutionArr: List[int], costs: List[int]) -> int:
+    numElement = len(solutionArr)
+    solutionCost = 0
+    
+    for i in range(numElement):
+        taskId = i + 1
+        workerId = solutionArr[i]
+        costOfAssignment = costs[taskId - 1][workerId - 1]
+        solutionCost += costOfAssignment
+    return solutionCost
+
+
 def isFeasibleSolution(penaltyFunction: callable, solutionArr: List[int], times: List[List[int]], workerTimeLimits: List[int]) -> bool:
     return penaltyFunction(solutionArr, times, workerTimeLimits) <= 0
 
 
-def generateFeasibleSol(penaltyFunction, times, workerTimeLimits):
+def generateFeasibleSol(penaltyFunction: callable, times: List[List[int]], workerTimeLimits: List[List[int]], firstNode: int, numTask: int) -> List[List[int]]:
     numWorker= 5
     currTask = 1
     queue = deque()
     
-    # assign worker 1 to task 1
-    queue.append([1])
+    # assign starting worker to task 1
+    queue.append([firstNode])
     
-    while queue is not None and currTask <= 15:
+    while queue is not None and currTask <= numTask:
+        allSol = []
         print("currTask: ", currTask)
         lenFrontier = len(queue)
         
@@ -84,17 +99,55 @@ def generateFeasibleSol(penaltyFunction, times, workerTimeLimits):
             currSol = queue.popleft()
             print("Curr sol: ", currSol)
             
-            if len(currSol) == 15:
-                return currSol
+            if len(currSol) == numTask:
+                allSol.append(currSol)
           
-            # add child nodes to queue     
-            for i in range(numWorker):
-                tempCurrSol = currSol.copy() 
-                tempCurrSol.append(i+1)
-                if isFeasibleSolution(penaltyFunction, tempCurrSol, times, workerTimeLimits):
-                    queue.append(tempCurrSol)
+            # add child nodes to queue  
+            else:   
+                for i in range(numWorker):
+                    tempCurrSol = currSol.copy() 
+                    tempCurrSol.append(i+1)
+                    if isFeasibleSolution(penaltyFunction, tempCurrSol, times, workerTimeLimits):
+                        queue.append(tempCurrSol)
         currTask += 1
       
-    return "NO FEASIBLE SOLUTION FOUND!"
+    return allSol
+
+
+def getOptimalSol(generator: callable) -> List[int]:
+    bestCost = math.inf
+    bestSol = None
     
-print(generateFeasibleSol(calculatePenalty, times, workerTimeLimits))
+    for i in range(5):
+        sols = generator(calculatePenalty, times, workerTimeLimits, i + 1, 15)
+        for sol in sols:
+            currCost = calculateCost(sol, costs)
+            if currCost < bestCost:
+                bestCost = currCost
+                bestSol = sol
+    
+    return (bestSol, bestCost)
+
+
+def getAllOptimalSols(generator: callable) -> List[List[int]]:
+    bestCost = math.inf
+    bestSols = []
+    
+    for i in range(5):
+        sols = generator(calculatePenalty, times, workerTimeLimits, i + 1, 15)
+        for sol in sols:
+            currCost = calculateCost(sol, costs)
+            if currCost < bestCost:
+                bestCost = currCost
+          
+                bestSols = [sol]
+            elif currCost == bestCost:
+                bestSols.append(sol)
+    
+    return bestSols
+
+# generates a feasible solution
+# print(getOptimalSol(generateFeasibleSol)) # output: ([3, 1, 1, 3, 4, 5, 3, 2, 5, 2, 3, 1, 5, 4, 2], 269)
+
+# generates all optimal solutions
+print(getAllOptimalSols(generateFeasibleSol)) # output: [[3, 1, 1, 3, 4, 5, 3, 2, 5, 2, 3, 1, 5, 4, 2], [3, 1, 1, 3, 4, 5, 3, 2, 5, 5, 3, 1, 2, 4, 2]]
